@@ -3,12 +3,21 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_back_white.xml" value="0.356" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_gps_white.xml" value="0.356" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_key_gray.xml" value="0.356" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_launcher_background.xml" value="0.356" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_local_shipping_gray.xml" value="0.356" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_person_gray.xml" value="0.356" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/ic_store_gray.xml" value="0.356" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/shape_circle01.xml" value="0.356" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/shape_rect01.xml" value="0.356" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/drawable/shape_rect02.xml" value="0.356" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_forgot_password.xml" value="0.371875" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_login.xml" value="0.33" />
-        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_register_seller.xml" value="0.1" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_main_seller.xml" value="0.371875" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_main_user.xml" value="0.371875" />
+        <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_register_seller.xml" value="0.25" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_register_user.xml" value="0.33" />
         <entry key="..\:/Users/ByronGG/AndroidStudioProjects/Pharmacy/app/src/main/res/layout/activity_splash.xml" value="0.371875" />
       </map>

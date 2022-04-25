@@ -8,6 +8,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,6 +22,8 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,8 +31,22 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class RegisterSellerActivity extends AppCompatActivity implements LocationListener{
 
@@ -56,7 +73,10 @@ public class RegisterSellerActivity extends AppCompatActivity implements Locatio
     //imagen uri
     private Uri image_uri;
 
-    private double latitude, longitude;
+    private double latitude = 0.0, longitude = 0.0;
+
+    private FirebaseAuth firebaseAuth;
+    private ProgressDialog progressDialog;
 
     private LocationManager locationManager;
 
@@ -85,6 +105,11 @@ public class RegisterSellerActivity extends AppCompatActivity implements Locatio
         locationPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
         cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         storagePermissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Porfavor espere");
+        progressDialog.setCanceledOnTouchOutside(false);
 
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,8 +144,190 @@ public class RegisterSellerActivity extends AppCompatActivity implements Locatio
             @Override
             public void onClick(View view) {
                 //Registrar usuario
+                inputData();
             }
         });
+    }
+
+    private String fullName, shopName, shopNumber, deliveryFee, country, state, city, address, email,
+    password, confirmPassword;
+    private void inputData() {
+        //input
+        fullName = nameEt.getText().toString().trim();
+        shopName = shopNameEt.getText().toString().trim();
+        shopNumber = phoneEt.getText().toString().trim();
+        deliveryFee = deliveryFeeEt.getText().toString().trim();
+        country = countryEt.getText().toString().trim();
+        state = stateEt.getText().toString().trim();
+        city = cityEt.getText().toString().trim();
+        address = addressEt.getText().toString().trim();
+        email = emailEt.getText().toString().trim();
+        password = passwordEt.getText().toString().trim();
+        confirmPassword = cpasswordEt.getText().toString().trim();
+        //Validar
+        if (TextUtils.isEmpty(fullName)){
+            Toast.makeText(this, "Ingrese nombre", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (TextUtils.isEmpty(shopName)){
+            Toast.makeText(this, "Ingrese nombre de la tienda", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (TextUtils.isEmpty(shopNumber)){
+            Toast.makeText(this, "Ingrese numero de la tienda", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (TextUtils.isEmpty(deliveryFee)){
+            Toast.makeText(this, "Ingrese los gatos de envio", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (latitude == 0.0 || longitude == 0.0){
+            Toast.makeText(this, "Porfavor utilice el boton GPS, arriba a la derecha de la app", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+            Toast.makeText(this, "Patrón de correo electrónico no válido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (password.length()<8){
+            Toast.makeText(this, "La contraseña debe ser almenos de 8 caracteres", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!password.equals(confirmPassword)){
+            Toast.makeText(this, "La contraseña no concuerda", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        createAccount();
+    }
+
+    private void createAccount() {
+        progressDialog.setMessage("Creando cuenta del usuario");
+        progressDialog.show();
+
+        //crear cuenta firebase
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+            @Override
+            public void onSuccess(AuthResult authResult) {
+                saverFirebaseData();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                progressDialog.dismiss();
+                Toast.makeText(RegisterSellerActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void saverFirebaseData() {
+        progressDialog.setMessage("Guardando la información del usuario");
+        String timestamp = ""+System.currentTimeMillis();
+        if (image_uri == null){
+            //Guarando info sin imagen
+
+            //setup para los datos
+            HashMap<String, Object> hashMap = new HashMap<>();
+            hashMap.put("uid", "" + firebaseAuth.getUid());
+            hashMap.put("email", "" + email);
+            hashMap.put("name", "" + fullName);
+            hashMap.put("shopName", "" + shopName);
+            hashMap.put("phone", "" + shopNumber);
+            hashMap.put("deliveryFee", "" + deliveryFee);
+            hashMap.put("country", "" + country);
+            hashMap.put("state", "" + state);
+            hashMap.put("city", "" + city);
+            hashMap.put("address", "" + address);
+            hashMap.put("latitude", "" + latitude);
+            hashMap.put("timestamp", "" + timestamp);
+            hashMap.put("accountType", "Seller");
+            hashMap.put("online", "true");
+            hashMap.put("shopOpen", "true");
+            hashMap.put("profileImage", "");
+
+            //guardar db
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
+            ref.child(firebaseAuth.getUid()).setValue(hashMap)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            progressDialog.dismiss();
+                            startActivity(new Intent(RegisterSellerActivity.this, MainSellerActivity.class));
+                            finish();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    //fail
+                    progressDialog.dismiss();
+                    startActivity(new Intent(RegisterSellerActivity.this, MainSellerActivity.class));
+                    finish();
+                }
+            });
+        } else {
+            //Guardando info con imagen
+            //nombre y direccion de la imagen
+            String filePathAndName = "profile_images/" + "" +firebaseAuth.getUid();
+            //subir imagen
+            StorageReference storageReference = FirebaseStorage.getInstance().getReference(filePathAndName);
+            storageReference.putFile(image_uri)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            //url de la imagen
+                            Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
+                            while (!uriTask.isSuccessful());
+                            Uri downloadImageUri = uriTask.getResult();
+                            if (uriTask.isSuccessful()){
+
+                                //setup para los datos
+                                HashMap<String, Object> hashMap = new HashMap<>();
+                                hashMap.put("uid", "" + firebaseAuth.getUid());
+                                hashMap.put("email", "" + email);
+                                hashMap.put("name", "" + fullName);
+                                hashMap.put("shopName", "" + shopName);
+                                hashMap.put("phone", "" + shopNumber);
+                                hashMap.put("deliveryFee", "" + deliveryFee);
+                                hashMap.put("country", "" + country);
+                                hashMap.put("state", "" + state);
+                                hashMap.put("city", "" + city);
+                                hashMap.put("address", "" + address);
+                                hashMap.put("latitude", "" + latitude);
+                                hashMap.put("timestamp", "" + timestamp);
+                                hashMap.put("accountType", "Seller");
+                                hashMap.put("online", "true");
+                                hashMap.put("shopOpen", "true");
+                                hashMap.put("profileImage", "" + downloadImageUri); //url de la imagen
+
+                                //guardar db
+                                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
+                                ref.child(firebaseAuth.getUid()).setValue(hashMap)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                progressDialog.dismiss();
+                                                startActivity(new Intent(RegisterSellerActivity.this, MainSellerActivity.class));
+                                                finish();
+                                            }
+                                        }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        //fail
+                                        progressDialog.dismiss();
+                                        startActivity(new Intent(RegisterSellerActivity.this, MainSellerActivity.class));
+                                        finish();
+                                    }
+                                });
+                            }
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    progressDialog.dismiss();
+                    Toast.makeText(RegisterSellerActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void showImagePickDialog() {
